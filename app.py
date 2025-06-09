@@ -297,8 +297,8 @@ import boto3
 import os
 from werkzeug.utils import secure_filename
 
-S3_BUCKET = 'awslambda2s30606'
-S3_REGION = 'us-east-1'  # 依你的設定調整
+S3_BUCKET = 'finalprojects3'
+S3_REGION = 'us-east-1'  
 S3_FOLDER = 'uploads'
 
 s3 = boto3.client('s3', region_name=S3_REGION)
