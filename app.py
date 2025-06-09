@@ -59,7 +59,7 @@ def add_supplier():
     password = data.get('password')
 
     now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    hashed_pw = bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
+    hashed_pw = bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode('utf-8')
 
     cursor = db.cursor()
     cursor.execute("INSERT INTO suppliers (supplier_name, tel_number, add_time) VALUES (%s, %s, %s)",
@@ -88,7 +88,7 @@ def add_hospital():
     password = data.get('password')
 
     now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    hashed_pw = bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
+    hashed_pw = bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode('utf-8')
 
     cursor = db.cursor()
     cursor.execute("INSERT INTO hospitals (hospital_name, hospital_address, tel_number, add_time) VALUES (%s, %s, %s, %s)",
