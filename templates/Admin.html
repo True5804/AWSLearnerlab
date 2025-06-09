@@ -144,7 +144,11 @@
         body: JSON.stringify(data)
       });
       const result = await res.json();
-      alert(result.status || 'Done');
+      if (result.success === false && result.status?.includes("exists")) {
+			alert("⚠️ This account already exists, please change another user name!");
+		} else {
+			alert(result.status || '✅ Supplier added successfully');
+		}
     }
 
     async function addHospital() {

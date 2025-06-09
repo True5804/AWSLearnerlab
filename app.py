@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify, send_file,render_template
 import mysql.connector
 import json
-import bcrypt
+from werkzeug.security import generate_password_hash, check_password_hash
 import datetime
 
 app = Flask(__name__)
@@ -59,11 +59,16 @@ def add_supplier():
     password = data.get('password')
 
     now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    hashed_pw = bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode('utf-8')
+    hashed_pw = generate_password_hash(password)
 
     cursor = db.cursor()
-    cursor.execute("INSERT INTO suppliers (supplier_name, tel_number, add_time) VALUES (%s, %s, %s)",
-                   (name, phone, now))
+    cursor.execute("SELECT * FROM users WHERE username = %s", (username,))
+    exists = cursor.fetchone()
+    if exists:
+        return jsonify(success=False, status="❌ Username already exists")
+
+    cursor.execute("INSERT INTO suppliers (supplier_name, tel_number,account_name, add_time) VALUES (%s,%s, %s, %s)",
+                   (name, phone,username, now))
     cursor.execute("INSERT INTO users (username, password, role) VALUES (%s, %s, 'supplier')",
                    (username, hashed_pw))
     db.commit()
@@ -88,7 +93,7 @@ def add_hospital():
     password = data.get('password')
 
     now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    hashed_pw = bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode('utf-8')
+    hashed_pw = generate_password_hash(password)
 
     cursor = db.cursor()
     cursor.execute("INSERT INTO hospitals (hospital_name, hospital_address, tel_number, add_time) VALUES (%s, %s, %s, %s)",
@@ -254,8 +259,7 @@ def login():
     if not user:
         return jsonify(success=False, message="User not found")
 
-    hashed_pw = user["password"].encode('utf-8')
-    if bcrypt.checkpw(password.encode('utf-8'), hashed_pw):
+    if check_password_hash(user["password"], password):
         redirect_map = {
             "admin": "/admin",
             "supplier": "/supplier",
@@ -282,12 +286,10 @@ def change_password():
     if not user:
         return jsonify(success=False, message="User not found")
 
-    stored_hash = user['password'].encode('utf-8')
-
-    if not bcrypt.checkpw(old_password.encode('utf-8'), stored_hash):
+    if check_password_hash(user["password"], old_password):
         return jsonify(success=False, message="Old password incorrect")
 
-    new_hash = bcrypt.hashpw(new_password.encode(), bcrypt.gensalt()).decode('utf-8')
+    new_hash = generate_password_hash(new_password)
     cursor.execute("UPDATE users SET password = %s WHERE username = %s", (new_hash, username))
     db.commit()
     cursor.close()
