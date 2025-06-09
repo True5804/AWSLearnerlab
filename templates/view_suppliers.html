@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Authorized Suppliers List</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+	 body {
+      background: linear-gradient(to bottom right, #f6f3eb, #e9e0d1);
+      min-height: 100vh;
+    }
+    .card-yellow {
+      background-color: #fdf2d1 !important;
+      border: 1px solid #ffffff;
+    }
+  </style>
+</head>
+<body>
+
+    <nav class="navbar navbar-expand-lg navbar-light bg-light px-4">
+      <div class="container-fluid">
+        <a class="navbar-brand fw-bold" href="/">Blood Management System</a>
+        <div class="d-flex ms-auto">
+          <ul class="navbar-nav">
+            <li class="nav-item"><a class="nav-link" href="/suppliers">Suppliers</a></li>
+            <li class="nav-item"><a class="nav-link" href="/hospitals">Hospitals</a></li>
+            <li class="nav-item"><a class="nav-link" href="/track">Track Blood</a></li>
+          </ul>
+        </div>
+        <span class="navbar-text" id="walletAddress"></span>
+      </div>
+    </nav>
+
+  <div class="container mt-4">
+	<h2 class="text-center mb-4">Authorized Suppliers List</h2>
+	<div id="supplierCards"></div>
+	</div>
+
+	<script>
+	async function loadSuppliers() {
+		try {
+			const response = await fetch('/api/suppliers');
+			const suppliers = await response.json();
+			const container = document.getElementById("supplierCards");
+			container.innerHTML = "";
+
+			suppliers.forEach(s => {
+				const card = document.createElement("div");
+				card.className = "card card-yellow mx-auto mb-4 p-3 shadow-sm";
+      			card.style.maxWidth = "700px";
+
+				card.innerHTML = `
+				<h5 class="fw-bold mb-2">Supplier Name: ${s.supplier_name}</h5>
+				<div><strong>Tel Number :</strong> ${s.tel_number}</div>
+				<div><strong>Added Time :</strong> ${formatTimestamp(s.add_time)}</div>
+				`;
+				container.appendChild(card);
+			});
+		} catch (err) {
+			console.error("❌ Failed to load suppliers:", err);
+		}
+	}
+
+    function formatTimestamp(timestamp) {
+		const date = new Date(timestamp);
+		if (isNaN(date.getTime())) return "Invalid Date";
+
+		const options = {
+			year: 'numeric', month: '2-digit', day: '2-digit',
+			hour: '2-digit', minute: '2-digit',
+			hour12: true
+		};
+
+		const formatted = date.toLocaleString('en-US', options);
+		const [mdy, time] = formatted.split(', ');
+		const [month, day, year] = mdy.split('/');
+		return `${year}/${month}/${day} ${time}`;
+	}
+
+
+    window.onload = loadSuppliers;
+  </script>
+</body>
+</html>

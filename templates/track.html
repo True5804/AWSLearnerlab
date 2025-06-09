@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Track Blood Status</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body {
+      background: linear-gradient(to bottom right, #f6f3eb, #e9e0d1);
+      min-height: 100vh;
+    }
+    .card-style {
+      max-width: 600px;
+      margin: 5rem auto;
+      padding: 2rem;
+      border-radius: 12px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.1);
+      background-color: #ffffff;
+    }
+  </style>
+</head>
+<body>
+  <nav class="navbar navbar-expand-lg navbar-light bg-light px-4">
+    <div class="container-fluid">
+      <a class="navbar-brand fw-bold" href="/">Blood Management System</a>
+       <div class="d-flex ms-auto">
+        <ul class="navbar-nav">
+          <li class="nav-item"><a class="nav-link" href="/suppliers">Suppliers</a></li>
+          <li class="nav-item"><a class="nav-link" href="/hospitals">Hospitals</a></li>
+          <li class="nav-item"><a class="nav-link" href="/track">Track Blood</a></li>
+        </ul>
+      </div>
+       <span class="navbar-text" id="walletAddress"></span>
+    </div>
+  </nav>
+
+  <div class="card-style">
+    <div class="mb-3">
+      <label for="bloodId" class="form-label fw-bold">Blood Id *</label>
+      <input type="number" class="form-control" id="bloodId" placeholder="Enter Blood ID">
+    </div>
+    <button class="btn btn-primary w-100 mt-2" onclick="checkStatus()">Check Status</button>
+    <div class="mt-3" id="statusResult" style="font-weight: bold;"></div>
+  </div>
+
+  <!-- 查詢函式 -->
+  <script>
+    async function checkStatus() {
+        const id = document.getElementById('bloodId').value;
+        const statusBox = document.getElementById('statusResult');
+
+        if (!id) {
+        alert('Please enter a Blood ID');
+        return;
+        }
+
+        try {
+        const response = await fetch(`/api/blood_status/${id}`);
+        const data = await response.json();
+
+        statusBox.innerText = `Status: ${data.status}`;
+
+        switch (data.status) {
+            case "Active":
+            statusBox.style.color = "green";
+            break;
+            case "Shipped":
+            statusBox.style.color = "orange";
+            break;
+            case "Fulfilled":
+            statusBox.style.color = "red";
+            break;
+            default:
+            statusBox.style.color = "gray";
+            break;
+        }
+
+        } catch (err) {
+        console.error("Error during fetch:", err);
+        statusBox.innerText = "Error: Unable to fetch status";
+        statusBox.style.color = "gray";
+        }
+    }
+</script>
+
+</body>
+</html>

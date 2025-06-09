@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Supplier Panel - BloodChain</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+	.upload-area {
+		border: 2px dashed #ccc;
+		padding: 40px 20px;
+		border-radius: 8px;
+		cursor: pointer;
+		background-color: #fdfdfd;
+		transition: 0.3s;
+	}
+	.upload-area:hover {
+		background-color: #f7f7f7;
+	}
+	.file-input {
+		position: absolute;
+		top: 0; left: 0;
+		width: 100%; height: 100%;
+		opacity: 0;
+		cursor: pointer;
+	}
+	.upload-button {
+		z-index: 1;
+	}
+	.loading-spinner {
+		width: 40px;
+		height: 40px;
+		border: 5px solid #f3f3f3;
+		border-top: 5px solid #0066cc;
+		border-radius: 50%;
+		animation: spin 1s linear infinite;
+	}
+	@keyframes spin {
+		0% { transform: rotate(0); }
+		100% { transform: rotate(360deg); }
+	}
+  </style>
+</head>
+<body>
+
+    <nav class="navbar navbar-expand-lg navbar-light bg-light px-4">
+      <div class="container-fluid">
+        <a class="navbar-brand fw-bold" href="/">Blood Management System</a>
+        <div class="d-flex ms-auto">
+          <ul class="navbar-nav">
+            <li class="nav-item"><a class="nav-link" href="/suppliers">Suppliers</a></li>
+            <li class="nav-item"><a class="nav-link" href="/hospitals">Hospitals</a></li>
+            <li class="nav-item"><a class="nav-link" href="/track">Track Blood</a></li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+  <div class="container mt-4">
+    <h2>Supplier Panel</h2>
+    <hr>
+
+    <ul class="nav nav-tabs" id="supplierTabs" role="tablist">
+		<li class="nav-item" role="presentation">
+			<button class="nav-link active" id="addDonor-tab" data-bs-toggle="tab" data-bs-target="#addDonor" type="button" role="tab" aria-controls="addDonor" aria-selected="true">Add Donor</button>
+		</li>
+		<li class="nav-item" role="presentation">
+			<button class="nav-link" id="shipBlood-tab" data-bs-toggle="tab" data-bs-target="#shipBlood" type="button" role="tab" aria-controls="shipBlood" aria-selected="false">Ship Blood</button>
+		</li>
+		<li class="nav-item" role="presentation">
+			<button class="nav-link" id="changePassword-tab" data-bs-toggle="tab" data-bs-target="#changePassword" type="button" role="tab" aria-controls="changePassword" aria-selected="false">Change Password</button>
+		</li>
+		<li class="nav-item">
+			<button class="nav-link" id="upload-tab" data-bs-toggle="tab" data-bs-target="#uploadTab" type="button" role="tab" aria-controls="upload" aria-selected="false">📁 Upload File</button>
+		</li>
+	</ul>
+
+    <div class="tab-content mt-4 text-center">
+		<div class="tab-pane fade" id="shipBlood">
+			<div style="max-width: 400px; margin: 0 auto;">
+			<div class="form-group mb-3">
+				<label for="bloodId" class="form-label fw-bold">Blood ID *</label>
+				<input class="form-control text-center" id="bloodId" placeholder="Enter Blood ID">
+			</div>
+
+			<div class="form-group mb-4">
+				<label for="hospitalAddr" class="form-label fw-bold">Hospital Address *</label>
+				<input class="form-control text-center" id="hospitalAddr" placeholder="0x...">
+			</div>
+
+			<button class="btn btn-success w-100" onclick="shipBlood()">Ship</button>
+			</div>
+		</div>
+
+		<div class="tab-pane fade show active" id="addDonor">
+		  <div style="max-width: 400px; margin: 0 auto;">
+			<div class="form-group mb-3">
+			<label for="donorName" class="form-label fw-bold">Donor Name *</label>
+			<input class="form-control text-center" id="donorName">
+			</div>
+
+			<div class="form-group mb-3">
+			<label for="donorAge" class="form-label fw-bold">Age *</label>
+			<input class="form-control text-center" id="donorAge">
+			</div>
+
+			<div class="form-group mb-3">
+			<label for="donorGender" class="form-label fw-bold">Biological sex *</label>
+			<select class="form-select text-center" id="donorGender">
+				<option value="" selected disabled>Select</option>
+				<option value="Male">Male</option>
+				<option value="Female">Female</option>
+			</select>
+			</div>
+
+			<div class="form-group mb-3">
+			<label for="donorAddress" class="form-label fw-bold">Phone Number *</label>
+			<input class="form-control text-center" id="donorPhone">
+			</div>
+
+			<div class="form-group mb-3">
+			<label for="donorBloodGroup" class="form-label fw-bold">Blood Group *</label>
+			<select class="form-select text-center" id="donorBloodGroup">
+				<option value="" selected disabled>Select</option>
+				<option value="A+">A+</option>
+				<option value="A-">A-</option>
+				<option value="B+">B+</option>
+				<option value="B-">B-</option>
+				<option value="AB+">AB+</option>
+				<option value="AB-">AB-</option>
+				<option value="O+">O+</option>
+				<option value="O-">O-</option>
+			</select>
+			</div>
+
+			<div class="form-group mb-4">
+			<label for="bloodVolume" class="form-label fw-bold">Blood Volume (ml) *</label>
+			<input class="form-control text-center" id="bloodVolume">
+			</div>
+
+			<button class="btn btn-primary" onclick="addDonor()">Add</button>
+		  </div>
+		</div>
+		
+		<div class="tab-pane fade" id="changePassword">
+			<div style="max-width: 400px; margin: 0 auto;">
+				<div class="form-group mb-3">
+				<label class="form-label fw-bold">Old Password</label>
+				<input type="password" class="form-control text-center" id="oldPassword">
+				</div>
+				<div class="form-group mb-3">
+				<label class="form-label fw-bold">New Password</label>
+				<input type="password" class="form-control text-center" id="newPassword">
+				</div>
+				<button class="btn btn-warning w-100" onclick="changePassword()">Update Password</button>
+			</div>
+		</div>
+
+		<div class="tab-pane fade" id="uploadTab">
+			<div class="container py-4">
+				<h4 class="mb-3">Upload Documents (PDF / CSV / Image)</h4>
+
+				<div class="upload-area border border-secondary rounded p-4 text-center position-relative">
+				<input type="file" id="fileInput" class="file-input" accept=".pdf,.csv,image/*">
+				<button class="upload-button btn btn-primary">Select File</button>
+				<p class="mt-2">Or drag your file here</p>
+				</div>
+
+				<div class="loading mt-3 text-center" style="display: none;">
+				<div class="loading-spinner mx-auto mb-2"></div>
+				<p>Uploading... Please hold</p>
+				</div>
+
+				<div class="upload-status alert mt-3" id="uploadStatus" style="display: none;"></div>
+			</div>
+		</div>
+
+  	</div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+
+    async function addDonor() {
+      const name = document.getElementById('donorName').value;
+      const age = document.getElementById('donorAge').value;
+      const genderFull = document.getElementById('donorGender').value;
+	  const gender = genderFull === 'Male' ? 'M' : 'F';
+      const phone_number = document.getElementById('donorPhone').value;
+      const blood = document.getElementById('donorBloodGroup').value;
+      const volume = document.getElementById('bloodVolume').value;
+      
+      try {
+			const postData = {
+				donorName: name,
+				age: age,
+				gender: gender,
+				phone_number: phone_number,  
+				bloodGroup: blood,
+				bloodVolume: volume,
+				donatedTime: new Date().toISOString().slice(0, 19).replace('T', ' ')
+			};
+
+			const res = await fetch('/api/add_donor', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify(postData)
+			});
+
+			alert("✅ Donor added database");
+		} catch (err) {
+			console.error(err);
+			alert("❌ Failed to add donor");
+		}
+    }
+
+
+    async function shipBlood() {
+		const id = document.getElementById('bloodId').value;
+		const hospital = document.getElementById('hospitalAddr').value;
+		try {
+			const c = await getContract();
+			const tx = await c.shipBloodToHospital(id, hospital);
+			await tx.wait();
+			alert("✅ Blood shipped successfully");
+		} catch (err) {
+			console.error(err);
+			alert("❌ Failed to ship blood");
+		}
+	}
+
+	async function changePassword() {
+		const oldPassword = document.getElementById('oldPassword').value;
+		const newPassword = document.getElementById('newPassword').value;
+		const username = prompt("🔒 Please enter your username again:"); // 或透過 session 提供
+
+		const res = await fetch('/api/change_password', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({
+			username,
+			oldPassword,
+			newPassword
+			})
+		});
+
+		const result = await res.json();
+		alert(result.message || (result.success ? 'Password changed' : 'Failed'));
+	}
+
+	document.addEventListener('DOMContentLoaded', () => {
+		const fileInput = document.getElementById('fileInput');
+		const uploadArea = document.querySelector('.upload-area');
+		const status = document.getElementById('uploadStatus');
+		const loading = document.querySelector('.loading');
+
+		fileInput.addEventListener('change', e => {
+			const file = e.target.files[0];
+			if (file) uploadFile(file);
+		});
+
+		uploadArea.addEventListener('dragover', e => {
+			e.preventDefault(); uploadArea.classList.add('bg-light');
+		});
+		uploadArea.addEventListener('dragleave', e => {
+			e.preventDefault(); uploadArea.classList.remove('bg-light');
+		});
+		uploadArea.addEventListener('drop', e => {
+			e.preventDefault();
+			uploadArea.classList.remove('bg-light');
+			const file = e.dataTransfer.files[0];
+			if (file) uploadFile(file);
+		});
+
+		function uploadFile(file) {
+			const reader = new FileReader();
+			const status = document.getElementById('uploadStatus');
+			const loading = document.querySelector('.loading');
+
+			loading.style.display = 'block';
+			status.style.display = 'none';
+
+			// 顯示圖片預覽（如果是圖片）
+			if (file.type.startsWith('image/')) {
+				const preview = document.getElementById('imagePreview') || document.createElement('img');
+				preview.id = 'imagePreview';
+				preview.className = 'image-preview';
+				document.querySelector('.upload-area').appendChild(preview);
+
+				reader.onload = function (e) {
+					preview.src = e.target.result;
+					preview.style.display = 'block';
+				};
+				reader.readAsDataURL(file);
+			}
+
+			// 第二個 reader 負責上傳
+			const uploadReader = new FileReader();
+			uploadReader.onload = async function (e) {
+				const base64Data = e.target.result.split(',')[1]; // 移除 data:image/...base64,
+				const contentType = file.type || 'application/octet-stream';
+				const payload = {
+					key: base64Data,
+					filename: file.name,
+					content_type: contentType
+				};
+
+				try {
+					const res = await fetch('https://sn2kap4yjb.execute-api.us-east-1.amazonaws.com/default/API2Lambda', {
+						method: 'POST',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify(payload)
+					});
+
+					const text = await res.text();
+					const result = (text.startsWith('{')) ? JSON.parse(text) : text;
+
+					status.className = 'upload-status alert alert-success';
+					status.textContent = '✅ File uploaded successfully';
+					if (typeof result === 'string') {
+						status.innerHTML += `<br><a href="${result}" target="_blank">${result}</a>`;
+					} else if (result.url) {
+						status.innerHTML += `<br><a href="${result.url}" target="_blank">${result.url}</a>`;
+					}
+				} catch (err) {
+					status.className = 'upload-status alert alert-danger';
+					status.textContent = '❌ Upload failed: ' + err.message;
+				} finally {
+					status.style.display = 'block';
+					loading.style.display = 'none';
+				}
+			};
+			uploadReader.readAsDataURL(file);
+		}
+
+	});
+
+  </script>
+</body>
+</html>
