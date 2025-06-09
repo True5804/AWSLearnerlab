@@ -287,7 +287,7 @@ def change_password():
     if not bcrypt.checkpw(old_password.encode('utf-8'), stored_hash):
         return jsonify(success=False, message="Old password incorrect")
 
-    new_hash = bcrypt.hashpw(new_password.encode(), bcrypt.gensalt()).decode()
+    new_hash = bcrypt.hashpw(new_password.encode(), bcrypt.gensalt()).decode('utf-8')
     cursor.execute("UPDATE users SET password = %s WHERE username = %s", (new_hash, username))
     db.commit()
     cursor.close()
