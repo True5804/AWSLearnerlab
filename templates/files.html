@@ -61,6 +61,7 @@
           ? `<img src="${file.url}" class="file-preview" alt="preview">`
           : `<div class="mb-2">📄 ${file.key.split('/').pop()}</div>`;
 
+        const safeKey = encodeURIComponent(file.key);
         col.innerHTML = `
           <div class="file-card">
             ${preview}
@@ -72,7 +73,7 @@
               <a class="btn btn-outline-success" href="${file.url}" download>Download</a>
               ${role === 'admin' ? `
                 <button class="btn btn-outline-danger" onclick="deleteFile('${file.key}')">Delete</button>
-                <input type="text" placeholder="New name" class="form-control form-control-sm d-inline w-50" id="rename_${btoa(file.key)}">
+                <input type="text" placeholder="New name" class="form-control form-control-sm d-inline w-50" id="rename_${safeKey}">
                 <button class="btn btn-outline-warning" onclick="renameFile('${file.key}')">Rename</button>
               ` : ''}
             </div>
