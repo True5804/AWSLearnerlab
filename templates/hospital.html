@@ -287,19 +287,14 @@
 			loading.style.display = 'block';
 			status.style.display = 'none';
 
-			// 顯示圖片預覽（如果是圖片）
+			const preview = document.getElementById('imagePreview');
 			if (file.type.startsWith('image/')) {
-				const preview = document.getElementById('imagePreview') || document.createElement('img');
-				preview.id = 'imagePreview';
-				preview.className = 'image-preview';
-				document.querySelector('.upload-area').appendChild(preview);
-
-				reader.onload = function (e) {
-					preview.src = e.target.result;
-					preview.style.display = 'block';
-				};
-				reader.readAsDataURL(file);
+				preview.src = URL.createObjectURL(file);
+				preview.classList.remove('d-none');
+			} else {
+				preview.classList.add('d-none');
 			}
+
 
 			// 第二個 reader 負責上傳
 			const uploadReader = new FileReader();
