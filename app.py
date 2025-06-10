@@ -359,22 +359,22 @@ def upload_file():
     except Exception as e:
         return jsonify(success=False, message=str(e))
 
-@app.route('/api/list_files', methods=['GET'])
+@app.route("/api/list_files")
 def list_files():
     try:
-        response = s3.list_objects_v2(Bucket=S3_BUCKET, Prefix=S3_FOLDER + '/')
+        response = s3.list_objects_v2(Bucket=S3_BUCKET)
         files = []
         for obj in response.get('Contents', []):
-            key = obj['Key']
             files.append({
-                'key': key,
-                'url': f"https://{S3_BUCKET}.s3.{S3_REGION}.amazonaws.com/{key}",
+                'key': obj['Key'],
+                'url': f"https://{S3_BUCKET}.s3.amazonaws.com/{obj['Key']}",
                 'size': obj['Size'],
                 'last_modified': obj['LastModified'].isoformat()
             })
-        return jsonify(files)
+        return jsonify(files)  
     except Exception as e:
-        return jsonify(success=False, message=str(e)), 500
+        print("List file error:", e)
+        return jsonify({"message": str(e), "success": False}), 500
 
 @app.route('/api/delete_file', methods=['POST'])
 def delete_file():
