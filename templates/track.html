@@ -3,6 +3,7 @@
 <head>
   <title>Track Blood Status</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     body {
       background: linear-gradient(to bottom right, #f6f3eb, #e9e0d1);
@@ -21,12 +22,14 @@
 <body>
   <nav class="navbar navbar-expand-lg navbar-light bg-light px-4">
     <div class="container-fluid">
-      <a class="navbar-brand fw-bold" href="/">Blood Management System</a>
+      <a href="javascript:void(0)" class="navbar-brand fw-bold" onclick="goToHome()">Blood Management System</a>
        <div class="d-flex ms-auto">
         <ul class="navbar-nav">
           <li class="nav-item"><a class="nav-link" href="/suppliers">Suppliers</a></li>
           <li class="nav-item"><a class="nav-link" href="/hospitals">Hospitals</a></li>
           <li class="nav-item"><a class="nav-link" href="/track">Track Blood</a></li>
+          <li class="nav-item"><a class="nav-link" href="/files">Files</a></li>
+          <li class="nav-item"><a class="nav-link text-danger fw-bold" href="/logout">Logout</a></li>
         </ul>
       </div>
        <span class="navbar-text" id="walletAddress"></span>
@@ -40,6 +43,11 @@
     </div>
     <button class="btn btn-primary w-100 mt-2" onclick="checkStatus()">Check Status</button>
     <div class="mt-3" id="statusResult" style="font-weight: bold;"></div>
+
+    <div class="container my-5">
+      <h5 class="text-center mb-4">📊 Blood Inventory by Blood Type</h5>
+      <canvas id="bloodTypeChart" height="120"></canvas>
+    </div>
   </div>
 
   <!-- 查詢函式 -->
@@ -80,7 +88,88 @@
         statusBox.style.color = "gray";
         }
     }
-</script>
 
+    async function loadGroupedBarChart() {
+      try {
+        const res = await fetch("/api/blood_status_by_type");
+        const data = await res.json();
+
+        const bloodTypes = Object.keys(data);
+        const activeData = bloodTypes.map(bt => data[bt].Active || 0);
+        const shippedData = bloodTypes.map(bt => data[bt].Shipped || 0);
+        const fulfilledData = bloodTypes.map(bt => data[bt].Fulfilled || 0);
+
+        const ctx = document.getElementById('bloodTypeChart').getContext('2d');
+        new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: bloodTypes,
+            datasets: [
+              {
+                label: 'Active',
+                data: activeData,
+                backgroundColor: 'green'
+              },
+              {
+                label: 'Shipped',
+                data: shippedData,
+                backgroundColor: 'orange'
+              },
+              {
+                label: 'Fulfilled',
+                data: fulfilledData,
+                backgroundColor: 'red'
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            plugins: {
+              legend: {
+                position: 'top'
+              },
+              title: {
+                display: false
+              }
+            },
+            scales: {
+              x: {
+                stacked: false
+              },
+              y: {
+                beginAtZero: true,
+                ticks: {
+                  stepSize: 1 
+                }
+              }
+            }
+          }
+        });
+
+      } catch (err) {
+        console.error("Failed to load chart data:", err);
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', loadGroupedBarChart);
+
+    function goToHome() {
+		const role = localStorage.getItem('role');
+		if (role === 'admin') {
+			window.location.href = '/admin';
+		} else if (role === 'supplier') {
+			window.location.href = '/supplier';
+		} else if (role === 'hospital') {
+			window.location.href = '/hospital';
+		} else {
+			window.location.href = '/';  // fallback: index.html
+		}
+	  }
+
+    function logout() {
+		localStorage.removeItem('role');
+		window.location.href = '/logout';
+	}
+</script>
 </body>
 </html>

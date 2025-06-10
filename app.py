@@ -1,10 +1,11 @@
-from flask import Flask, request, jsonify, send_file,render_template
+from flask import Flask, request, jsonify, send_file,render_template, session, redirect, url_for
 import mysql.connector
 import json
 from werkzeug.security import generate_password_hash, check_password_hash
 import datetime
 
 app = Flask(__name__)
+app.secret_key = '9a5b3c6f4a91d48fdc2e7817ea2d7c3f4f6ea5e8b14cf723a5ff5e0247c77f95'
 
 db = mysql.connector.connect(
     host="awslabdb.cemubq89koh0.us-east-1.rds.amazonaws.com",          
@@ -41,6 +42,10 @@ def view_hospitals():
 @app.route('/track')
 def track():
     return render_template('track.html')
+
+@app.route('/files')
+def file():
+    return render_template('files.html')
 
 @app.route('/api/suppliers')
 def get_suppliers():
@@ -241,8 +246,31 @@ def get_blood_status(blood_id):
         return jsonify(status="Unknown")
     return jsonify(status=row[0])
 
+@app.route('/api/blood_status_by_type')
+def blood_status_by_type():
+    cursor = db.cursor(dictionary=True)
+    cursor.execute("""
+        SELECT blood_group, status, COUNT(*) as count
+        FROM blood
+        GROUP BY blood_group, status
+    """)
+    rows = cursor.fetchall()
+    cursor.close()
+
+    result = {}
+    for row in rows:
+        bg = row['blood_group']
+        status = row['status']
+        count = row['count']
+        if bg not in result:
+            result[bg] = {'Active': 0, 'Shipped': 0, 'Fulfilled': 0}
+        result[bg][status] = count
+
+    return jsonify(result)
+
 @app.route('/login', methods=['POST'])
-def login():
+def login(): 
+
     data = request.json
     username = data.get("username")
     password = data.get("password")
@@ -260,12 +288,14 @@ def login():
         return jsonify(success=False, message="User not found")
 
     if check_password_hash(user["password"], password):
+        session['username'] = username
+        session['role'] = role
         redirect_map = {
             "admin": "/admin",
             "supplier": "/supplier",
             "hospital": "/hospital"
         }
-        return jsonify(success=True, redirect_url=redirect_map.get(role, "/"))
+        return jsonify(success=True, redirect_url=redirect_map.get(role, "/"), role=role)
     else:
         return jsonify(success=False, message="Incorrect password")
 
@@ -294,6 +324,11 @@ def change_password():
     db.commit()
     cursor.close()
     return jsonify(success=True, message="Password updated successfully")
+
+@app.route('/logout')
+def logout():
+    session.clear()  # 移除所有登入資訊
+    return redirect('/') 
 
 import boto3
 import os
@@ -324,5 +359,58 @@ def upload_file():
     except Exception as e:
         return jsonify(success=False, message=str(e))
 
+@app.route('/api/list_files', methods=['GET'])
+def list_files():
+    try:
+        response = s3.list_objects_v2(Bucket=S3_BUCKET, Prefix=S3_FOLDER + '/')
+        files = []
+        for obj in response.get('Contents', []):
+            key = obj['Key']
+            files.append({
+                'key': key,
+                'url': f"https://{S3_BUCKET}.s3.{S3_REGION}.amazonaws.com/{key}",
+                'size': obj['Size'],
+                'last_modified': obj['LastModified'].isoformat()
+            })
+        return jsonify(files)
+    except Exception as e:
+        return jsonify(success=False, message=str(e)), 500
+
+@app.route('/api/delete_file', methods=['POST'])
+def delete_file():
+    if session.get('role') != 'admin':
+        return jsonify(success=False, message="Permission denied"), 403
+
+    data = request.json
+    key = data.get('key')
+    if not key:
+        return jsonify(success=False, message="Missing key")
+
+    try:
+        s3.delete_object(Bucket=S3_BUCKET, Key=key)
+        return jsonify(success=True, message="✅ File deleted")
+    except Exception as e:
+        return jsonify(success=False, message=str(e)), 500
+
+@app.route('/api/rename_file', methods=['POST'])
+def rename_file():
+    if session.get('role') != 'admin':
+        return jsonify(success=False, message="Permission denied"), 403
+
+    data = request.json
+    old_key = data.get('old_key')
+    new_key = data.get('new_key')
+    if not old_key or not new_key:
+        return jsonify(success=False, message="Missing keys")
+
+    try:
+        s3.copy_object(Bucket=S3_BUCKET, CopySource={'Bucket': S3_BUCKET, 'Key': old_key}, Key=new_key)
+        s3.delete_object(Bucket=S3_BUCKET, Key=old_key)
+        return jsonify(success=True, message="✅ File renamed")
+    except Exception as e:
+        return jsonify(success=False, message=str(e)), 500
+
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000,debug=True)
+    

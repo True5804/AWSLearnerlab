@@ -33,6 +33,14 @@
 		border-radius: 50%;
 		animation: spin 1s linear infinite;
 	}
+	.image-preview {
+		max-width: 300px;
+		max-height: 300px;
+		border: 1px solid #ccc;
+		border-radius: 8px;
+		display: block;
+		margin: auto;
+	}
 	@keyframes spin {
 		0% { transform: rotate(0); }
 		100% { transform: rotate(360deg); }
@@ -43,12 +51,13 @@
 
     <nav class="navbar navbar-expand-lg navbar-light bg-light px-4">
       <div class="container-fluid">
-        <a class="navbar-brand fw-bold" href="/">Blood Management System</a>
-        <div class="d-flex ms-auto">
+        <a href="javascript:void(0)" class="navbar-brand fw-bold" onclick="goToHome()">Blood Management System</a>
           <ul class="navbar-nav">
             <li class="nav-item"><a class="nav-link" href="/suppliers">Suppliers</a></li>
             <li class="nav-item"><a class="nav-link" href="/hospitals">Hospitals</a></li>
             <li class="nav-item"><a class="nav-link" href="/track">Track Blood</a></li>
+			<li class="nav-item"><a class="nav-link" href="/files">Files</a></li>
+			<li class="nav-item"><a class="nav-link text-danger fw-bold" href="/logout">Logout</a></li>
           </ul>
         </div>
       </div>
@@ -159,14 +168,16 @@
 				<h4 class="mb-3">Upload Documents (PDF / CSV / Image)</h4>
 
 				<div class="upload-area border border-secondary rounded p-4 text-center position-relative">
-				<input type="file" id="fileInput" class="file-input" accept=".pdf,.csv,image/*">
-				<button class="upload-button btn btn-primary">Select File</button>
-				<p class="mt-2">Or drag your file here</p>
+					<input type="file" id="fileInput" class="file-input" accept=".pdf,.csv,image/*">
+					<button class="upload-button btn btn-primary">Select File</button>
+					<p class="mt-2">Or drag your file here</p>
 				</div>
 
+				<img id="imagePreview" class="image-preview d-none my-3" />
+
 				<div class="loading mt-3 text-center" style="display: none;">
-				<div class="loading-spinner mx-auto mb-2"></div>
-				<p>Uploading... Please hold</p>
+					<div class="loading-spinner mx-auto mb-2"></div>
+					<p>Uploading... Please hold</p>
 				</div>
 
 				<div class="upload-status alert mt-3" id="uploadStatus" style="display: none;"></div>
@@ -277,21 +288,15 @@
 			loading.style.display = 'block';
 			status.style.display = 'none';
 
-			// 顯示圖片預覽（如果是圖片）
+			const preview = document.getElementById('imagePreview');
 			if (file.type.startsWith('image/')) {
-				const preview = document.getElementById('imagePreview') || document.createElement('img');
-				preview.id = 'imagePreview';
-				preview.className = 'image-preview';
-				document.querySelector('.upload-area').appendChild(preview);
-
-				reader.onload = function (e) {
-					preview.src = e.target.result;
-					preview.style.display = 'block';
-				};
-				reader.readAsDataURL(file);
+				preview.src = URL.createObjectURL(file);
+				preview.classList.remove('d-none');
+			} else {
+				preview.classList.add('d-none');
 			}
 
-			// 第二個 reader 負責上傳
+			
 			const uploadReader = new FileReader();
 			uploadReader.onload = async function (e) {
 				const base64Data = e.target.result.split(',')[1]; // 移除 data:image/...base64,
@@ -331,6 +336,24 @@
 		}
 
 	});
+
+	function goToHome() {
+		const role = localStorage.getItem('role');
+		if (role === 'admin') {
+			window.location.href = '/admin';
+		} else if (role === 'supplier') {
+			window.location.href = '/supplier';
+		} else if (role === 'hospital') {
+			window.location.href = '/hospital';
+		} else {
+			window.location.href = '/';  // fallback: index.html
+		}
+	  }
+
+	  function logout() {
+		localStorage.removeItem('role');
+		window.location.href = '/logout';
+	}
 
   </script>
 </body>

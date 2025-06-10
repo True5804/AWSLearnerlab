@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>S3 File Manager</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    .file-card {
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      border-radius: 10px;
+      padding: 15px;
+      margin-bottom: 20px;
+    }
+    .file-preview {
+      max-width: 100%;
+      max-height: 200px;
+      object-fit: contain;
+      border: 1px solid #ddd;
+      margin-bottom: 10px;
+    }
+    .btn-group-sm button {
+      margin-right: 5px;
+    }
+  </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light px-4">
+        <div class="container-fluid">
+          <a href="javascript:void(0)" class="navbar-brand fw-bold" onclick="goToHome()">Blood Management System</a>
+          <div class="d-flex ms-auto">
+            <ul class="navbar-nav">
+              <li class="nav-item"><a class="nav-link" href="/suppliers">Suppliers</a></li>
+              <li class="nav-item"><a class="nav-link" href="/hospitals">Hospitals</a></li>
+              <li class="nav-item"><a class="nav-link" href="/track">Track Blood</a></li>
+			        <li class="nav-item"><a class="nav-link" href="/files">Files</a></li>
+              <li class="nav-item"><a class="nav-link text-danger fw-bold" href="/logout">Logout</a></li>
+            </ul>
+          </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+    <h2>📁 File Management</h2>
+    <hr>
+    <div id="fileContainer" class="row"></div>
+
+  <script>
+    const role = localStorage.getItem('role');  // 'admin' | 'supplier' | 'hospital'
+    const fileContainer = document.getElementById('fileContainer');
+
+    async function loadFiles() {
+      const res = await fetch('/api/list_files');
+      const files = await res.json();
+      fileContainer.innerHTML = '';
+
+      files.forEach(file => {
+        const col = document.createElement('div');
+        col.className = 'col-md-4';
+
+        const preview = file.url.match(/\.(jpg|jpeg|png|gif)$/i)
+          ? `<img src="${file.url}" class="file-preview" alt="preview">`
+          : `<div class="mb-2">📄 ${file.key.split('/').pop()}</div>`;
+
+        col.innerHTML = `
+          <div class="file-card">
+            ${preview}
+            <div><strong>Filne name：</strong> ${file.key}</div>
+            <div><strong>Size：</strong> ${Math.round(file.size / 1024)} KB</div>
+            <div><strong>Time：</strong> ${new Date(file.last_modified).toLocaleString()}</div>
+            <div class="btn-group btn-group-sm mt-2">
+              <a class="btn btn-outline-primary" href="${file.url}" target="_blank">View</a>
+              <a class="btn btn-outline-success" href="${file.url}" download>Download</a>
+              ${role === 'admin' ? `
+                <button class="btn btn-outline-danger" onclick="deleteFile('${file.key}')">Delete</button>
+                <input type="text" placeholder="New name" class="form-control form-control-sm d-inline w-50" id="rename_${btoa(file.key)}">
+                <button class="btn btn-outline-warning" onclick="renameFile('${file.key}')">Rename</button>
+              ` : ''}
+            </div>
+          </div>
+        `;
+        fileContainer.appendChild(col);
+      });
+    }
+
+    async function deleteFile(key) {
+      if (!confirm(`Are you sure about deleting ${key} ?`)) return;
+      const res = await fetch('/api/delete_file', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        credentials: 'include',
+        body: JSON.stringify({ key })
+      });
+      const result = await res.json();
+      alert(result.message || 'Delete Successfully');
+      loadFiles();
+    }
+
+    async function renameFile(old_key) {
+      const inputId = 'rename_' + btoa(old_key);
+      const new_key = document.getElementById(inputId).value.trim();
+      if (!new_key) return alert('Please enter a new file name');
+      const res = await fetch('/api/rename_file', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        credentials: 'include',
+        body: JSON.stringify({ old_key, new_key })
+      });
+      const result = await res.json();
+      alert(result.message || 'Rename Successfully');
+      loadFiles();
+    }
+
+    // 初始化
+    loadFiles();
+
+    function goToHome() {
+		const role = localStorage.getItem('role');
+		if (role === 'admin') {
+			window.location.href = '/admin';
+		} else if (role === 'supplier') {
+			window.location.href = '/supplier';
+		} else if (role === 'hospital') {
+			window.location.href = '/hospital';
+		} else {
+			window.location.href = '/';  // fallback: index.html
+		}
+	  }
+
+    function logout() {
+      localStorage.removeItem('role');
+      window.location.href = '/logout';
+    }
+  
+  </script>
+</body>
+</html>

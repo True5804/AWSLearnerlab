@@ -13,12 +13,14 @@
 <body>
   <nav class="navbar navbar-expand-lg navbar-light bg-light px-4">
       <div class="container-fluid">
-        <a class="navbar-brand fw-bold" href="/">Blood Management System</a>
+        <a href="javascript:void(0)" class="navbar-brand fw-bold" onclick="goToHome()">Blood Management System</a>
         <div class="d-flex ms-auto">
           <ul class="navbar-nav">
             <li class="nav-item"><a class="nav-link" href="/suppliers">Suppliers</a></li>
             <li class="nav-item"><a class="nav-link" href="/hospitals">Hospitals</a></li>
             <li class="nav-item"><a class="nav-link" href="/track">Track Blood</a></li>
+			<li class="nav-item"><a class="nav-link" href="/files">Files</a></li>
+			<li class="nav-item"><a class="nav-link text-danger fw-bold" href="/logout">Logout</a></li>
           </ul>
         </div>
       </div>
@@ -33,6 +35,8 @@
       <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#addHospital">Add Hospitals</a></li>
       <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#viewDonors">View Donors</a></li>
       <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#viewPatients">View Patients</a></li>
+	  <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#uploadTab">📁 Upload File</a>
+		</li>
     </ul>
 
     <div class="tab-content mt-4 text-center">
@@ -125,6 +129,25 @@
 			</table>
 			</div>
       </div>
+
+	  <div class="tab-pane fade" id="uploadTab">
+			<div class="container py-4">
+				<h4 class="mb-3">Upload Documents (PDF / CSV / Image)</h4>
+
+				<div class="upload-area border border-secondary rounded p-4 text-center position-relative">
+					<input type="file" id="fileInput" class="file-input" accept=".pdf,.csv,image/*">
+					<button class="upload-button btn btn-primary">Select File</button>
+					<p class="mt-2">Or drag your file here</p>
+				</div>
+
+				<div class="loading mt-3 text-center" style="display: none;">
+					<div class="loading-spinner mx-auto mb-2"></div>
+					<p>Uploading... Please hold</p>
+				</div>
+
+				<div class="upload-status alert mt-3" id="uploadStatus" style="display: none;"></div>
+			</div>
+		</div>
     </div>
   </div>
 
@@ -208,6 +231,112 @@
 			`;
 			table.appendChild(row);
 		});
+	}
+
+	document.addEventListener('DOMContentLoaded', () => {
+		const fileInput = document.getElementById('fileInput');
+		const uploadArea = document.querySelector('.upload-area');
+		const status = document.getElementById('uploadStatus');
+		const loading = document.querySelector('.loading');
+
+		fileInput.addEventListener('change', e => {
+			const file = e.target.files[0];
+			if (file) uploadFile(file);
+		});
+
+		uploadArea.addEventListener('dragover', e => {
+			e.preventDefault(); uploadArea.classList.add('bg-light');
+		});
+		uploadArea.addEventListener('dragleave', e => {
+			e.preventDefault(); uploadArea.classList.remove('bg-light');
+		});
+		uploadArea.addEventListener('drop', e => {
+			e.preventDefault();
+			uploadArea.classList.remove('bg-light');
+			const file = e.dataTransfer.files[0];
+			if (file) uploadFile(file);
+		});
+
+		function uploadFile(file) {
+			const reader = new FileReader();
+			const status = document.getElementById('uploadStatus');
+			const loading = document.querySelector('.loading');
+
+			loading.style.display = 'block';
+			status.style.display = 'none';
+
+			// 顯示圖片預覽（如果是圖片）
+			if (file.type.startsWith('image/')) {
+				const preview = document.getElementById('imagePreview') || document.createElement('img');
+				preview.id = 'imagePreview';
+				preview.className = 'image-preview';
+				document.querySelector('.upload-area').appendChild(preview);
+
+				reader.onload = function (e) {
+					preview.src = e.target.result;
+					preview.style.display = 'block';
+				};
+				reader.readAsDataURL(file);
+			}
+
+			// 第二個 reader 負責上傳
+			const uploadReader = new FileReader();
+			uploadReader.onload = async function (e) {
+				const base64Data = e.target.result.split(',')[1]; // 移除 data:image/...base64,
+				const contentType = file.type || 'application/octet-stream';
+				const payload = {
+					key: base64Data,
+					filename: file.name,
+					content_type: contentType
+				};
+
+				try {
+					const res = await fetch('https://sn2kap4yjb.execute-api.us-east-1.amazonaws.com/default/API2Lambda', {
+						method: 'POST',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify(payload)
+					});
+
+					const text = await res.text();
+					const result = (text.startsWith('{')) ? JSON.parse(text) : text;
+
+					status.className = 'upload-status alert alert-success';
+					status.textContent = '✅ File uploaded successfully';
+					if (typeof result === 'string') {
+						status.innerHTML += `<br><a href="${result}" target="_blank">${result}</a>`;
+					} else if (result.url) {
+						status.innerHTML += `<br><a href="${result.url}" target="_blank">${result.url}</a>`;
+					}
+				} catch (err) {
+					status.className = 'upload-status alert alert-danger';
+					status.textContent = '❌ Upload failed: ' + err.message;
+				} finally {
+					status.style.display = 'block';
+					loading.style.display = 'none';
+				}
+			};
+			uploadReader.readAsDataURL(file);
+		}
+
+
+	});
+
+	function goToHome() {
+		const role = localStorage.getItem('role');
+		if (role === 'admin') {
+			window.location.href = '/admin';
+		} else if (role === 'supplier') {
+			window.location.href = '/supplier';
+		} else if (role === 'hospital') {
+			window.location.href = '/hospital';
+		} else {
+			window.location.href = '/';  // fallback: index.html
+		}
+	}
+
+	function logout() {
+		localStorage.removeItem('role');
+		window.location.href = '/logout';
 	}
   </script>
 </body>

@@ -7,9 +7,9 @@ CREATE TABLE users (
 );
 
 INSERT INTO users (username, password, role) VALUES
-('admin1',    '$2b$12$AskYZvb/J1AzHl80dfNKZetSxEA22jwHwVY6O/ENNuEzuxe7T379K', 'admin'),
-('supplier1', '$2b$12$QdGHM6yMqLvCBQ2jLxzvzO8b1BCPoCnq6fipdv5Qx2hApye3hgMra', 'supplier'),
-('hospital1', '$2b$12$F4Lc6AcdCxaQ81EUQNM4weGi1TklHOg/VLToen8n5rBXg8NVnbLlq', 'hospital');
+('admin1',    'scrypt:32768:8:1$zlkMb5Z7S4JlRXYz$82a8d2acffef70eccafab753edddbe62bec358606267e8ea01c84ab23b18bec358bdbb75045f8d3b744f2f0192d768fcd1a3f38e9b47a94a48b2e32d10eb90fd', 'admin'),
+('supplier1', 'scrypt:32768:8:1$HJbi86TY8IN6O6By$69754f780772ab149c56417c3e79a2b4b839565b9cf45717d42d32690d1b9cffca20798aceebb484892a00da8596f19fa5c8b7e1456fd5519eccb13f6473a0df', 'supplier'),
+('hospital1', 'scrypt:32768:8:1$6Les7ItRQbe2Ztjr$3a948c59006a1dfdf3661c773621251fca5d36421ca7d73fb7aba19a4c63a312fcb59fadaef93ca9645b7b497e8dabcf1a335f48225b572d1bf40a0401620362', 'hospital');
 
 CREATE TABLE password_change_log ( 
   id INT AUTO_INCREMENT PRIMARY KEY,

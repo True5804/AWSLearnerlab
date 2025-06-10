@@ -18,12 +18,14 @@
 
     <nav class="navbar navbar-expand-lg navbar-light bg-light px-4">
       <div class="container-fluid">
-        <a class="navbar-brand fw-bold" href="/">Blood Management System</a>
+        <a href="javascript:void(0)" class="navbar-brand fw-bold" onclick="goToHome()">Blood Management System</a>
         <div class="d-flex ms-auto">
           <ul class="navbar-nav">
             <li class="nav-item"><a class="nav-link" href="/suppliers">Suppliers</a></li>
             <li class="nav-item"><a class="nav-link" href="/hospitals">Hospitals</a></li>
             <li class="nav-item"><a class="nav-link" href="/track">Track Blood</a></li>
+			<li class="nav-item"><a class="nav-link" href="/files">Files</a></li>
+			<li class="nav-item"><a class="nav-link text-danger fw-bold" href="/logout">Logout</a></li>
           </ul>
         </div>
         <span class="navbar-text" id="walletAddress"></span>
@@ -78,6 +80,24 @@
 	}
 
     window.onload = loadHospitals;
+
+	function goToHome() {
+		const role = localStorage.getItem('role');
+		if (role === 'admin') {
+		window.location.href = '/admin';
+		} else if (role === 'supplier') {
+		window.location.href = '/supplier';
+		} else if (role === 'hospital') {
+		window.location.href = '/hospital';
+		} else {
+		window.location.href = '/';
+		}
+	}
+	  function logout() {
+		localStorage.removeItem('role');
+		window.location.href = '/logout';
+	}
+
   </script>
 </body>
 </html>
