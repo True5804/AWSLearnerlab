@@ -10,7 +10,7 @@ db = mysql.connector.connect(
     host="127.0.0.1",          
     port = 3306,
     user="root",      
-    password= "12300",  
+    password= " ",  //5dig
     database = "bloodBank", auth_plugin = 'mysql_native_password'
 )
 
